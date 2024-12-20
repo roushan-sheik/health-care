@@ -1,9 +1,12 @@
-import express from "express";
+/* eslint-disable no-console */
+import { Server } from "http";
+import { app } from "./app";
+const PORT = process.env.PORT || 8000;
 
-const app = express();
+async function main() {
+  const server: Server = app.listen(PORT, () => {
+    console.log(`\n Application is running on port: http://localhost:${PORT}`);
+  });
+}
 
-const port = 8000;
-
-app.listen(port, () => {
-  console.log("App is listening on  port");
-});
+main();
