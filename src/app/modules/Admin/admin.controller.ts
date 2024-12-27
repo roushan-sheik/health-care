@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import ApiResponse from "../../../utils/ApiResponse";
 
 const getAllAdmin = AsyncHandler(async (req: Request, res: Response) => {
-  const result = await getAdminsDataFromDB();
+  const result = await getAdminsDataFromDB(req.query);
   res
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, result, "All Admins Data"));
