@@ -1,8 +1,33 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "../../lib/database/prisma.client";
+import { prisma } from "../../../shared/prisma";
+
+interface ICalculatePagination {
+  page?: number;
+  limit?: number;
+  skip?: number;
+  sortBy?: string;
+  sortOrder?: string;
+}
+const calculatePagination = (
+  options: ICalculatePagination
+): ICalculatePagination => {
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
+  const sortOrder = options.sortOrder || "desc";
+
+  return {
+    page,
+    limit,
+    skip,
+    sortBy,
+    sortOrder,
+  };
+};
 
 export const getAdminsDataFromDB = async (filters: any, options: any) => {
-  const { page, limit } = options;
+  const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
   const { searchTerm, ...filterData } = filters;
 
   const andCondition: Prisma.AdminWhereInput[] = [];
@@ -36,8 +61,14 @@ export const getAdminsDataFromDB = async (filters: any, options: any) => {
   const whereCondition: Prisma.AdminWhereInput = { AND: andCondition };
   const result = await prisma.admin.findMany({
     where: whereCondition,
-    skip: (Number(page) - 1) * Number(limit),
-    take: Number(limit),
+    skip,
+    take: limit,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? { [options.sortBy]: options.sortOrder }
+        : {
+            createdAt: "desc",
+          },
   });
   return result;
 };
