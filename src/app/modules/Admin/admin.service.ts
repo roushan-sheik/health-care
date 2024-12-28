@@ -2,7 +2,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "../../../shared/prisma";
 import { calculatePagination } from "../../../helpers/pagination.helper";
 
-export const getAdminsDataFromDB = async (filters: any, options: any) => {
+// get admins from db
+const getAdminsDataFromDB = async (filters: any, options: any) => {
   const { searchTerm, ...filterData } = filters;
 
   const andCondition: Prisma.AdminWhereInput[] = [];
@@ -62,5 +63,15 @@ export const getAdminsDataFromDB = async (filters: any, options: any) => {
     data: result,
   };
 };
+// Get admin by id
+const getAdminByIdFromDB = async (adminId: string) => {
+  const result = await prisma.admin.findUnique({
+    where: {
+      id: adminId,
+    },
+  });
+  console.log("result", result);
+  return result;
+};
 
-export const adminService = { getAdminsDataFromDB };
+export const adminService = { getAdminsDataFromDB, getAdminByIdFromDB };
