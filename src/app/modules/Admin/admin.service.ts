@@ -1,33 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../shared/prisma";
-
-interface ICalculatePagination {
-  page?: number;
-  limit?: number;
-  skip?: number;
-  sortBy?: string;
-  sortOrder?: string;
-}
-const calculatePagination = (
-  options: ICalculatePagination
-): ICalculatePagination => {
-  const page = Number(options.page) || 1;
-  const limit = Number(options.limit) || 10;
-  const skip = (page - 1) * limit;
-  const sortBy = options.sortBy || "createdAt";
-  const sortOrder = options.sortOrder || "desc";
-
-  return {
-    page,
-    limit,
-    skip,
-    sortBy,
-    sortOrder,
-  };
-};
+import { calculatePagination } from "../../../helpers/pagination.helper";
 
 export const getAdminsDataFromDB = async (filters: any, options: any) => {
-  const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
   const { searchTerm, ...filterData } = filters;
 
   const andCondition: Prisma.AdminWhereInput[] = [];
@@ -58,14 +33,18 @@ export const getAdminsDataFromDB = async (filters: any, options: any) => {
     });
   }
 
+  // calculate  pagination
+  const { limit, skip, sortBy, sortOrder } = calculatePagination(options);
+  console.log({ limit, skip, sortBy, sortOrder });
+
   const whereCondition: Prisma.AdminWhereInput = { AND: andCondition };
   const result = await prisma.admin.findMany({
     where: whereCondition,
     skip,
     take: limit,
     orderBy:
-      options.sortBy && options.sortOrder
-        ? { [options.sortBy]: options.sortOrder }
+      sortBy && sortOrder
+        ? { [sortBy]: sortOrder }
         : {
             createdAt: "desc",
           },

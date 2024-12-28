@@ -5,7 +5,7 @@ interface ICalculatePagination {
   sortBy?: string;
   sortOrder?: string;
 }
-const calculatePagination = (
+export const calculatePagination = (
   options: ICalculatePagination
 ): ICalculatePagination => {
   const page = Number(options.page) || 1;
