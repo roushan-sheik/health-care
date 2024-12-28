@@ -312,6 +312,7 @@ export const adminService = { getAdminsDataFromDB };
 ## Frontend Pretty Response Example 😊😊😍
 
 ```ts
+Fetch: "{{base}}/admin?page=2&limit=1&sortBy=name&sortOrder=desc"
 {
     "success": true,
     "message": "Admin data",
