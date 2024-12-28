@@ -294,3 +294,43 @@ export const getAdminsDataFromDB = async (filters: any, options: any) => {
 
 export const adminService = { getAdminsDataFromDB };
 ```
+
+## Backend Response Example
+
+```ts
+  res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        result.data,
+        "Admin data",
+        result.meta
+      ).format()
+```
+
+## Frontend Pretty Response Example 😊😊😍
+
+```ts
+{
+    "success": true,
+    "message": "Admin data",
+    "meta": {
+        "page": 2,
+        "limit": 1,
+        "total": 11
+    },
+    "data": [
+        {
+            "id": "634e5c45-c334-4bad-97f0-116867ceb76b",
+            "name": "Test User 6",
+            "email": "test6@gmail.com",
+            "profilePhoto": null,
+            "contactNumber": "0123456787",
+            "isDeleted": false,
+            "createdAt": "2024-12-27T01:11:40.602Z",
+            "updatedAt": "2024-12-27T01:11:40.602Z"
+        }
+    ]
+}
+```
