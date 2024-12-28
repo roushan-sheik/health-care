@@ -14,7 +14,14 @@ const getAllAdmin = AsyncHandler(async (req: Request, res: Response) => {
   const result = await getAdminsDataFromDB(filters, options);
   res
     .status(StatusCodes.OK)
-    .json(new ApiResponse(StatusCodes.OK, result, "All Admins Data"));
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        result.data,
+        "Admin data",
+        result.meta
+      ).format()
+    );
 });
 
 export const adminController = { getAllAdmin };

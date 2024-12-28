@@ -34,8 +34,7 @@ export const getAdminsDataFromDB = async (filters: any, options: any) => {
   }
 
   // calculate  pagination
-  const { limit, skip, sortBy, sortOrder } = calculatePagination(options);
-  console.log({ limit, skip, sortBy, sortOrder });
+  const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
 
   const whereCondition: Prisma.AdminWhereInput = { AND: andCondition };
   const result = await prisma.admin.findMany({
@@ -49,7 +48,19 @@ export const getAdminsDataFromDB = async (filters: any, options: any) => {
             createdAt: "desc",
           },
   });
-  return result;
+  // calculate total
+  const total = await prisma.admin.count({
+    where: whereCondition,
+  });
+  // finally return results ============
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: result,
+  };
 };
 
 export const adminService = { getAdminsDataFromDB };
