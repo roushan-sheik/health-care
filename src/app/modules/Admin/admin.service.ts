@@ -34,6 +34,10 @@ const getAdminsDataFromDB = async (filters: any, options: any) => {
       }),
     });
   }
+  // remove soft deleted data
+  andCondition.push({
+    isDeleted: false,
+  });
 
   // calculate  pagination
   const { page, limit, skip, sortBy, sortOrder } = calculatePagination(options);
@@ -65,10 +69,11 @@ const getAdminsDataFromDB = async (filters: any, options: any) => {
   };
 };
 // Get admin by id
-const getAdminByIdFromDB = async (adminId: string) => {
+const getAdminByIdFromDB = async (adminId: string): Promise<Admin | null> => {
   const result = await prisma.admin.findUnique({
     where: {
       id: adminId,
+      isDeleted: false,
     },
   });
   console.log("result", result);
@@ -78,10 +83,11 @@ const getAdminByIdFromDB = async (adminId: string) => {
 const updateAdminByIdFromDB = async (
   adminId: string,
   payload: Partial<Admin>
-) => {
+): Promise<Admin> => {
   await prisma.admin.findUniqueOrThrow({
     where: {
       id: adminId,
+      isDeleted: false,
     },
   });
 
@@ -95,7 +101,9 @@ const updateAdminByIdFromDB = async (
 };
 // Soft Delete admin by id from db
 
-const deleteAdminByIdFromDB = async (adminId: string) => {
+const deleteAdminByIdFromDB = async (
+  adminId: string
+): Promise<Admin | null> => {
   await prisma.admin.findUniqueOrThrow({
     where: {
       id: adminId,
@@ -122,10 +130,13 @@ const deleteAdminByIdFromDB = async (adminId: string) => {
 };
 
 // Soft Delete admin by id from db
-const softDeleteAdminByIdFromDB = async (adminId: string) => {
+const softDeleteAdminByIdFromDB = async (
+  adminId: string
+): Promise<Admin | null> => {
   await prisma.admin.findUniqueOrThrow({
     where: {
       id: adminId,
+      isDeleted: false,
     },
   });
 
