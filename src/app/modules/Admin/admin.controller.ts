@@ -52,10 +52,22 @@ const deleteAdminById = AsyncHandler(async (req: Request, res: Response) => {
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, result, "Deleted Successful"));
 });
+// Delete admin by id from db
+
+const softDeleteAdminById = AsyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = adminService.softDeleteAdminByIdFromDB(id);
+    res
+      .status(StatusCodes.OK)
+      .json(new ApiResponse(StatusCodes.OK, result, "Deleted Successful"));
+  }
+);
 
 export const adminController = {
   getAllAdmin,
   getAdminById,
   updateAdminById,
   deleteAdminById,
+  softDeleteAdminById,
 };

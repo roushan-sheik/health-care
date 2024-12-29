@@ -95,6 +95,33 @@ const updateAdminByIdFromDB = async (
 };
 // Soft Delete admin by id from db
 
+const deleteAdminByIdFromDB = async (adminId: string) => {
+  await prisma.admin.findUniqueOrThrow({
+    where: {
+      id: adminId,
+    },
+  });
+
+  // transaction roll back
+  const result = await prisma.$transaction(async (transactionClient) => {
+    const adminDeletedData = await transactionClient.admin.delete({
+      where: {
+        id: adminId,
+      },
+    });
+    // softDelete the user also
+    await transactionClient.user.delete({
+      where: {
+        email: adminDeletedData.email,
+      },
+    });
+    return adminDeletedData;
+  });
+
+  return result;
+};
+
+// Soft Delete admin by id from db
 const softDeleteAdminByIdFromDB = async (adminId: string) => {
   await prisma.admin.findUniqueOrThrow({
     where: {
@@ -131,5 +158,6 @@ export const adminService = {
   getAdminsDataFromDB,
   getAdminByIdFromDB,
   updateAdminByIdFromDB,
+  deleteAdminByIdFromDB,
   softDeleteAdminByIdFromDB,
 };
