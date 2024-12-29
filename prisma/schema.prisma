@@ -20,10 +20,10 @@ model User {
   email String @unique
   password String
   role UserRole   
-  needPasswordChange UserStatus @default(ACTIVE)
+  needPasswordChange  Boolean @default(true) 
+  status UserStatus @default(ACTIVE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   admin Admin? // One to One Relation
 
   @@map("users")
@@ -51,4 +51,5 @@ enum UserRole {
 enum UserStatus {
   ACTIVE
   BLOCKED
+  DELETED
 }

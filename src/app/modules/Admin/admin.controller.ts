@@ -47,7 +47,7 @@ const updateAdminById = AsyncHandler(async (req: Request, res: Response) => {
 
 const deleteAdminById = AsyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const result = adminService.deleteAdminByIdFromDB(id);
+  const result = adminService.softDeleteAdminByIdFromDB(id);
   res
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, result, "Deleted Successful"));
