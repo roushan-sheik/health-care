@@ -71,7 +71,7 @@ class ApiResponse<T, K = undefined> {
     public meta?: K
   ) {
     this.success = statusCode < 400;
-    this.message = statusCode >= 400 ? "Failed" : message;
+    this.message = statusCode >= 400 ? "Failed" : message || "Successful";
   }
   // format the response method
   public format(): Record<string, any> {
@@ -84,6 +84,84 @@ class ApiResponse<T, K = undefined> {
   }
 }
 export default ApiResponse;
+```
+
+## Backend Response Example
+
+```ts
+  res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        result.data,
+        "Admin data",
+        result.meta
+      ).format()
+```
+
+## Frontend Pretty Response Example 😊😊😍
+
+```ts
+Fetch: "{{base}}/admin?page=2&limit=1&sortBy=name&sortOrder=desc"
+{
+    "success": true,
+    "message": "Admin data",
+    "meta": {
+        "page": 2,
+        "limit": 1,
+        "total": 11
+    },
+    "data": [
+        {
+            "id": "634e5c45-c334-4bad-97f0-116867ceb76b",
+            "name": "Test User 6",
+            "email": "test6@gmail.com",
+            "profilePhoto": null,
+            "contactNumber": "0123456787",
+            "isDeleted": false,
+            "createdAt": "2024-12-27T01:11:40.602Z",
+            "updatedAt": "2024-12-27T01:11:40.602Z"
+        }
+    ]
+}
+```
+
+## SendResponse Function
+
+```ts
+import { Response } from "express";
+
+// Send Response ====================================>
+export const SendResponse = <T>(
+  res: Response,
+  jsonData: {
+    statusCode: number;
+    data: T | null | undefined;
+    message?: string;
+    meta?: {
+      page: number;
+      limit: number;
+      total: number;
+    };
+  }
+) => {
+  // destructure
+  const { statusCode, data, message, meta } = jsonData;
+  // send response
+  res.status(statusCode).json({
+    success: statusCode < 400,
+    message: statusCode >= 400 ? "Failed" : message || "Successful",
+    meta: meta || null || undefined,
+    data: data || null || undefined,
+  });
+};
+```
+
+## Backend Response Example 😊😊😍
+
+```ts
+SendResponse(res, { statusCode: StatusCodes.OK, data: result });
 ```
 
 ## Basic search Query

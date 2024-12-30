@@ -8,7 +8,7 @@ class ApiResponse<T, K = undefined> {
     public meta?: K
   ) {
     this.success = statusCode < 400;
-    this.message = statusCode >= 400 ? "Failed" : message;
+    this.message = statusCode >= 400 ? "Failed" : message || "Successful";
   }
   // format the response method
   public format(): Record<string, any> {

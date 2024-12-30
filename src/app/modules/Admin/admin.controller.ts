@@ -5,6 +5,7 @@ import ApiResponse from "../../utils/ApiResponse";
 import { pik } from "../../../shared/pik";
 import { adminFilterAbleFields } from "./admin.constant";
 import { adminService } from "./admin.service";
+import { SendResponse } from "../../utils/SendResponse";
 
 // get admins from db
 const getAllAdmin = AsyncHandler(async (req: Request, res: Response) => {
@@ -29,9 +30,8 @@ const getAdminById = AsyncHandler(async (req: Request, res: Response) => {
   console.log(req.params.id);
 
   const result = await adminService.getAdminByIdFromDB(req.params.id);
-  res
-    .status(StatusCodes.OK)
-    .json(new ApiResponse(StatusCodes.OK, result, "Admin data").format());
+
+  SendResponse(res, { statusCode: StatusCodes.OK, data: result });
 });
 // Update admin by id
 const updateAdminById = AsyncHandler(async (req: Request, res: Response) => {

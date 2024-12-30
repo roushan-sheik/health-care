@@ -1,6 +1,7 @@
 import { Admin, Prisma, UserStatus } from "@prisma/client";
 import { prisma } from "../../../shared/prisma";
 import { calculatePagination } from "../../../helpers/pagination.helper";
+import { Response } from "express";
 
 // get admins from db
 const getAdminsDataFromDB = async (filters: any, options: any) => {
