@@ -11,6 +11,9 @@ app.get("/", (req: Request, res: Response) => {
 
 // Routes Imports =========================>
 import appRoute from "./app/routes";
+import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";
 app.use("/api/v1", appRoute);
+
+app.use(globalErrorHandler);
 
 export { app };
