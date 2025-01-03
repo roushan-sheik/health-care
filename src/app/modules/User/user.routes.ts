@@ -5,7 +5,7 @@ import { userSchema } from "./user.validation";
 
 const router = express();
 
-router.route("/").get(validateRequest(userSchema), userController.getAllUsers);
-router.route("/").post(userController.createAdmin);
+router.route("/").get(userController.getAllUsers);
+router.route("/").post(validateRequest(userSchema), userController.createAdmin);
 
 export const userRoutes = router;

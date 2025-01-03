@@ -11,7 +11,6 @@ import { SendResponse } from "../../utils/SendResponse";
 const getAllAdmin = AsyncHandler(async (req: Request, res: Response) => {
   const filters = pik(req.query, adminFilterAbleFields);
   const options = pik(req.query, ["page", "limit", "sortBy", "sortOrder"]);
-  console.log("options:", options);
 
   const result = await adminService.getAdminsDataFromDB(filters, options);
   res
