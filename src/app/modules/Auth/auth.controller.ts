@@ -3,7 +3,6 @@ import AsyncHandler from "../../utils/AsyncHandler";
 import { authServices } from "./auth.service";
 import { SendResponse } from "../../utils/SendResponse";
 import { StatusCodes } from "http-status-codes";
-import { access } from "fs";
 
 const loginUser = AsyncHandler(async (req: Request, res: Response) => {
   const result = await authServices.loginUser(req.body);
@@ -25,4 +24,18 @@ const loginUser = AsyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const authController = { loginUser };
+const refreshToken = AsyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    throw new Error("Refresh token is required");
+  }
+  const result = await authServices.refreshToken(refreshToken);
+  SendResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: "Token refreshed",
+    data: {
+      accessToken: result.accessToken,
+    },
+  });
+});
+export const authController = { loginUser, refreshToken };
