@@ -47,9 +47,9 @@ main();
 ## Async Handler
 
 ```ts
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 
-const AsyncHandler = (fn: Function) => {
+const AsyncHandler = (fn: RequestHandler) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
@@ -71,7 +71,7 @@ class ApiResponse<T, K = undefined> {
     public meta?: K
   ) {
     this.success = statusCode < 400;
-    this.message = statusCode >= 400 ? "Failed" : message;
+    this.message = statusCode >= 400 ? "Failed" : message || "Successful";
   }
   // format the response method
   public format(): Record<string, any> {
@@ -84,6 +84,84 @@ class ApiResponse<T, K = undefined> {
   }
 }
 export default ApiResponse;
+```
+
+## Backend Response Example
+
+```ts
+  res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        result.data,
+        "Admin data",
+        result.meta
+      ).format()
+```
+
+## Frontend Pretty Response Example 😊😊😍
+
+```ts
+Fetch: "{{base}}/admin?page=2&limit=1&sortBy=name&sortOrder=desc"
+{
+    "success": true,
+    "message": "Admin data",
+    "meta": {
+        "page": 2,
+        "limit": 1,
+        "total": 11
+    },
+    "data": [
+        {
+            "id": "634e5c45-c334-4bad-97f0-116867ceb76b",
+            "name": "Test User 6",
+            "email": "test6@gmail.com",
+            "profilePhoto": null,
+            "contactNumber": "0123456787",
+            "isDeleted": false,
+            "createdAt": "2024-12-27T01:11:40.602Z",
+            "updatedAt": "2024-12-27T01:11:40.602Z"
+        }
+    ]
+}
+```
+
+## SendResponse Function
+
+```ts
+import { Response } from "express";
+
+// Send Response ====================================>
+export const SendResponse = <T>(
+  res: Response,
+  jsonData: {
+    statusCode: number;
+    data: T | null | undefined;
+    message?: string;
+    meta?: {
+      page: number;
+      limit: number;
+      total: number;
+    };
+  }
+) => {
+  // destructure
+  const { statusCode, data, message, meta } = jsonData;
+  // send response
+  res.status(statusCode).json({
+    success: statusCode < 400,
+    message: statusCode >= 400 ? "Failed" : message || "Successful",
+    meta: meta || null || undefined,
+    data: data || null || undefined,
+  });
+};
+```
+
+## Backend Response Example 😊😊😍
+
+```ts
+SendResponse(res, { statusCode: StatusCodes.OK, data: result });
 ```
 
 ## Basic search Query
@@ -293,4 +371,78 @@ export const getAdminsDataFromDB = async (filters: any, options: any) => {
 };
 
 export const adminService = { getAdminsDataFromDB };
+```
+
+## Backend Response Example
+
+```ts
+  res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        result.data,
+        "Admin data",
+        result.meta
+      ).format()
+```
+
+## Frontend Pretty Response Example 😊😊😍
+
+```ts
+Fetch: "{{base}}/admin?page=2&limit=1&sortBy=name&sortOrder=desc"
+{
+    "success": true,
+    "message": "Admin data",
+    "meta": {
+        "page": 2,
+        "limit": 1,
+        "total": 11
+    },
+    "data": [
+        {
+            "id": "634e5c45-c334-4bad-97f0-116867ceb76b",
+            "name": "Test User 6",
+            "email": "test6@gmail.com",
+            "profilePhoto": null,
+            "contactNumber": "0123456787",
+            "isDeleted": false,
+            "createdAt": "2024-12-27T01:11:40.602Z",
+            "updatedAt": "2024-12-27T01:11:40.602Z"
+        }
+    ]
+}
+```
+
+## Routes Organize
+
+```ts
+import express from "express";
+import { userRoutes } from "../modules/User/user.routes";
+import { adminRoutes } from "../modules/Admin/admin.routes";
+
+const router = express.Router();
+
+const moduleRoutes = [
+  {
+    path: "/user",
+    route: userRoutes,
+  },
+  {
+    path: "/admin",
+    route: adminRoutes,
+  },
+];
+
+moduleRoutes.forEach((route) => router.use(route.path, route.route));
+
+export default router;
+```
+
+## Uses Example
+
+```ts
+// Routes Imports =========================>
+import appRoute from "./app/routes";
+app.use("/api/v1", appRoute);
 ```

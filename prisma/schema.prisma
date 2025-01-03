@@ -16,20 +16,20 @@ datasource db {
 // Schemas ===========================>
 
 model User {
-  id String @default(uuid())
+  id String @id @default(uuid())
   email String @unique
   password String
   role UserRole   
-  needPasswordChange UserStatus @default(ACTIVE)
+  needPasswordChange  Boolean @default(true) 
+  status UserStatus @default(ACTIVE)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   admin Admin? // One to One Relation
 
   @@map("users")
 }
 model Admin {
-  id String @default(uuid())
+  id String @id @default(uuid())
   name String
   email String @unique
   profilePhoto String?
@@ -51,4 +51,5 @@ enum UserRole {
 enum UserStatus {
   ACTIVE
   BLOCKED
+  DELETED
 }
