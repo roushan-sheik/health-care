@@ -25,9 +25,10 @@ const loginUser = AsyncHandler(async (req: Request, res: Response) => {
 });
 
 const refreshToken = AsyncHandler(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
   if (!refreshToken) {
-    throw new Error("Refresh token is required");
+    // status 401
+    throw new Error("You are not authorized");
   }
   const result = await authServices.refreshToken(refreshToken);
   SendResponse(res, {
