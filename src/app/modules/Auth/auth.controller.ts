@@ -22,14 +22,32 @@ const loginUser = AsyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-const refreshToken = AsyncHandler(async (req: Request, res: Response) => {
+const logOutUser = AsyncHandler(async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
   if (!refreshToken) {
     // status 401
     throw new ApiError(401, "You are not authorized");
   }
-  const result = await authServices.refreshToken(refreshToken);
+  await authServices.logOutUser(refreshToken);
 
+  // remove refreshToken from the cookie
+  res.clearCookie("refreshToken");
+
+  SendResponse(res, {
+    statusCode: 200,
+    message: "Logout successful",
+  });
+});
+
+const refreshedToken = AsyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+  if (!refreshToken) {
+    // status 401
+    throw new ApiError(401, "You are not authorized");
+  }
+
+  const result = await authServices.refreshedToken(refreshToken);
+  console.log("SERVICE result>>>", { result });
   // set accessToken to the cookie
   res.cookie("refreshToken", result?.refreshToken, cookieOptions);
 
@@ -42,4 +60,4 @@ const refreshToken = AsyncHandler(async (req: Request, res: Response) => {
     },
   });
 });
-export const authController = { loginUser, refreshToken };
+export const authController = { loginUser, refreshedToken, logOutUser };

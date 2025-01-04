@@ -5,7 +5,7 @@ export const SendResponse = <T>(
   res: Response,
   jsonData: {
     statusCode: number;
-    data: T | null | undefined;
+    data?: T | null | undefined;
     message?: string;
     meta?: {
       page: number;
