@@ -12,7 +12,6 @@ const loginUser = AsyncHandler(async (req: Request, res: Response) => {
   res.cookie("refreshToken", result.refreshToken, cookieOptions);
 
   // send response with accessToken
-
   SendResponse(res, {
     statusCode: StatusCodes.OK,
     message: "Login successful",

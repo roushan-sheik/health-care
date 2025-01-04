@@ -7,6 +7,7 @@ const createAdmin = async (payload: any) => {
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
   const userData = {
+    username: payload?.username,
     email: payload.admin.email,
     password: hashedPassword,
     role: UserRole.ADMIN,

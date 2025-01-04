@@ -1,8 +1,8 @@
 export const adminFilterAbleFields = [
-  "name",
+  "username",
   "email",
   "searchTerm",
   "contactNumber",
 ];
 
-export const adminSearchAbleFields = ["name", "email", "contactNumber"];
+export const adminSearchAbleFields = ["username", "email", "contactNumber"];

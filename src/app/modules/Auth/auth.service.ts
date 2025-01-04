@@ -8,13 +8,22 @@ import ApiError from "../../utils/ApiError";
 
 // Login user =====================>
 const loginUser = async (payload: IPayload) => {
-  const user = await prisma.user.findUniqueOrThrow({
+  const { username, email, password } = payload;
+  // check email or username is required or not
+  if (!username && !email) {
+    throw new Error("Email or username is required");
+  }
+  // find user by email or username and check user status
+  const user = await prisma.user.findFirstOrThrow({
     where: {
-      email: payload.email,
       status: UserStatus.ACTIVE,
+      OR: [{ email: email }, { username: username }],
     },
   });
-  // compare password
+  if (!user) {
+    throw new Error("User Dose not exist");
+  }
+  // check password is correct or not
   const isPasswordCorrect = await bcrypt.compare(
     payload.password,
     user.password
@@ -22,6 +31,7 @@ const loginUser = async (payload: IPayload) => {
   if (!isPasswordCorrect) {
     throw new Error("Invalid email or password");
   }
+  // generate access token and refresh token
   const accessToken = jwtHelpers.generateToken(
     { email: user.email, role: user.role },
     process.env.JWT_ACCESS_TOKEN_SECRET as string,
@@ -32,6 +42,15 @@ const loginUser = async (payload: IPayload) => {
     process.env.JWT_REFRESH_TOKEN_SECRET as string,
     "15d"
   );
+  // update refresh token in user table
+  await prisma.user.update({
+    where: {
+      email: user.email,
+    },
+    data: {
+      refreshToken,
+    },
+  });
 
   return {
     accessToken,
