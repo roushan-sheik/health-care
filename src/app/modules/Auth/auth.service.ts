@@ -1,9 +1,10 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { prisma } from "../../../shared/prisma";
-import { IPayload } from "./auth.interface";
+import { IPayload, IRefreshTokenResponse } from "./auth.interface";
 import { jwtHelpers } from "../../../helpers/jwtHelper";
 import { UserStatus } from "@prisma/client";
+import ApiError from "../../utils/ApiError";
 
 // Login user =====================>
 const loginUser = async (payload: IPayload) => {
@@ -40,30 +41,63 @@ const loginUser = async (payload: IPayload) => {
 };
 
 // Refresh token =====================>
-const refreshToken = async (token: string) => {
-  if (!token) {
-    throw new Error("You are not authorized");
+const refreshToken = async (
+  incomingRefreshToken: string
+): Promise<IRefreshTokenResponse | void> => {
+  // check  token have or not or throw an error
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "You are not authorized");
   }
-  const decodedData: JwtPayload | null = jwtHelpers.verifyToken(
-    process.env.JWT_REFRESH_TOKEN_SECRET as string,
-    token
-  );
-
-  const isUserExist = await prisma.user.findUniqueOrThrow({
-    where: {
-      email: decodedData?.email,
-      status: UserStatus.ACTIVE,
-    },
-  });
-  if (isUserExist) {
-    throw new Error("Invalid");
+  // use trycatch block to handle error
+  try {
+    // decode token
+    const decodedData: JwtPayload | null = jwtHelpers.verifyToken(
+      process.env.JWT_REFRESH_TOKEN_SECRET as string,
+      incomingRefreshToken
+    );
+    // find user by decoded email
+    const user = await prisma.user.findUniqueOrThrow({
+      where: {
+        email: decodedData?.email,
+        status: UserStatus.ACTIVE,
+      },
+    });
+    // check user have or not
+    if (!user) {
+      throw new ApiError(401, "You are not authorized");
+    }
+    // check refresh token is same or not
+    if (incomingRefreshToken !== user.refreshToken) {
+      throw new ApiError(401, "You are not authorized");
+    }
+    // generate new access token and refresh token
+    const accessToken = jwtHelpers.generateToken(
+      { email: decodedData?.email, role: decodedData?.role },
+      process.env.JWT_ACCESS_TOKEN_SECRET as string,
+      "5m"
+    );
+    const refreshToken = jwtHelpers.generateToken(
+      { email: decodedData?.email, role: decodedData?.role },
+      process.env.JWT_REFRESH_TOKEN_SECRET as string,
+      "15d"
+    );
+    // update refresh token in user table
+    await prisma.user.update({
+      where: {
+        email: decodedData?.email,
+      },
+      data: {
+        refreshToken,
+      },
+    });
+    return {
+      accessToken,
+      refreshToken,
+      needPasswordChange: user.needPasswordChange,
+    };
+  } catch (error) {
+    new ApiError(401, "Invalid refresh token");
   }
-  const accessToken = jwtHelpers.generateToken(
-    { email: decodedData?.email, role: decodedData?.role },
-    process.env.JWT_ACCESS_TOKEN_SECRET as string,
-    "5m"
-  );
-  return { accessToken, needPasswordChange: isUserExist.needPasswordChange };
 };
 
 export const authServices = { loginUser, refreshToken };
