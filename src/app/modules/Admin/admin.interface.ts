@@ -1,5 +1,5 @@
 export interface IAdminFilterRequest {
-  name?: string | undefined;
+  username?: string | undefined;
   email?: string | undefined;
   searchTerm?: string | undefined;
   contactNumber?: string | undefined;

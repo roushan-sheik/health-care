@@ -1,7 +1,6 @@
 import { Admin, Prisma, UserStatus } from "@prisma/client";
 import { prisma } from "../../../shared/prisma";
 import { calculatePagination } from "../../../helpers/pagination.helper";
-import { Response } from "express";
 import { IAdminFilterRequest } from "./admin.interface";
 import { IPaginationOptions } from "../../interfaces/pagination";
 
@@ -14,7 +13,7 @@ const getAdminsDataFromDB = async (
 
   const andCondition: Prisma.AdminWhereInput[] = [];
 
-  const adminSearchAbleFields = ["name", "email", "contactNumber"];
+  const adminSearchAbleFields = ["username", "email", "contactNumber"];
 
   if (filters.searchTerm) {
     andCondition.push({
