@@ -97,7 +97,6 @@ const refreshedToken = async (incomingRefreshToken: string) => {
     incomingRefreshToken,
     process.env.JWT_REFRESH_TOKEN_SECRET as string
   );
-  console.log("🚀 ~ decodedData:", { decodedData });
 
   // find user by decoded email
   const user = await prisma.user.findUniqueOrThrow({
@@ -110,7 +109,7 @@ const refreshedToken = async (incomingRefreshToken: string) => {
   if (!user) {
     throw new ApiError(401, "You are not authorized");
   }
-  console.log("User ", user);
+
   // check refresh token is same or not
   if (incomingRefreshToken !== user.refreshToken) {
     throw new ApiError(401, "You are not authorized");
