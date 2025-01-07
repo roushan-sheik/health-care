@@ -66,8 +66,8 @@ const logOutUser = async (refreshToken: string) => {
   try {
     // decode token
     const decodedData: JwtPayload | null = jwtHelpers.verifyToken(
-      config.jwt.refresh_token_secret as string,
-      refreshToken
+      refreshToken,
+      config.jwt.refresh_token_secret as string
     );
 
     // update refresh token in user table
