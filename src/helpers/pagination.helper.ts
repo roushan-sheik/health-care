@@ -23,6 +23,6 @@ export const calculatePagination = (
   };
 };
 
-const paginationHelper = {
+export const paginationHelper = {
   calculatePagination,
 };

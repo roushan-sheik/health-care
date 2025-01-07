@@ -1,10 +1,11 @@
-import { JwtPayload } from "jsonwebtoken";
+import { JwtPayload, Secret } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { prisma } from "../../../shared/prisma";
 import { IPayload } from "./auth.interface";
 import { jwtHelpers } from "../../../helpers/jwtHelper";
 import { UserStatus } from "@prisma/client";
 import ApiError from "../../utils/ApiError";
+import config from "../../../config";
 
 // Login user =====================>
 const loginUser = async (payload: IPayload) => {
@@ -31,13 +32,13 @@ const loginUser = async (payload: IPayload) => {
   // generate access token and refresh token
   const accessToken = jwtHelpers.generateToken(
     { email: user.email, role: user.role },
-    process.env.JWT_ACCESS_TOKEN_SECRET as string,
-    "5m"
+    config.jwt.access_token_secret as Secret,
+    config.jwt.access_token_expiration as string
   );
   const refreshToken = jwtHelpers.generateToken(
     { email: user.email, role: user.role },
-    process.env.JWT_REFRESH_TOKEN_SECRET as string,
-    "15d"
+    config.jwt.refresh_token_secret as Secret,
+    config.jwt.refresh_token_expiration as string
   );
   // update refresh token in user table
   await prisma.user.update({
@@ -65,7 +66,7 @@ const logOutUser = async (refreshToken: string) => {
   try {
     // decode token
     const decodedData: JwtPayload | null = jwtHelpers.verifyToken(
-      process.env.JWT_REFRESH_TOKEN_SECRET as string,
+      config.jwt.refresh_token_secret as string,
       refreshToken
     );
 
@@ -81,8 +82,8 @@ const logOutUser = async (refreshToken: string) => {
     return {
       message: "Logout successfully",
     };
-  } catch (error) {
-    new ApiError(401, "Invalid refresh token");
+  } catch {
+    throw new ApiError(401, "Invalid refresh token");
   }
 };
 // Refresh token =====================>
@@ -95,7 +96,7 @@ const refreshedToken = async (incomingRefreshToken: string) => {
   // decode token
   const decodedData: JwtPayload = jwtHelpers.verifyToken(
     incomingRefreshToken,
-    process.env.JWT_REFRESH_TOKEN_SECRET as string
+    config.jwt.refresh_token_secret as Secret
   );
 
   // find user by decoded email
@@ -117,13 +118,13 @@ const refreshedToken = async (incomingRefreshToken: string) => {
   // generate new access token and refresh token
   const newAccessToken = jwtHelpers.generateToken(
     { email: decodedData?.email, role: decodedData?.role },
-    process.env.JWT_ACCESS_TOKEN_SECRET as string,
-    "5m"
+    config.jwt.access_token_secret as Secret,
+    config.jwt.access_token_expiration as string
   );
   const newRefreshToken = jwtHelpers.generateToken(
     { email: decodedData?.email, role: decodedData?.role },
-    process.env.JWT_REFRESH_TOKEN_SECRET as string,
-    "15d"
+    config.jwt.refresh_token_secret as Secret,
+    config.jwt.refresh_token_expiration as string
   );
   // update refresh token in user table
   await prisma.user.update({
