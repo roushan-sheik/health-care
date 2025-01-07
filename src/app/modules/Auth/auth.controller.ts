@@ -47,7 +47,7 @@ const refreshedToken = AsyncHandler(async (req: Request, res: Response) => {
   }
 
   const result = await authServices.refreshedToken(refreshToken);
-  console.log("SERVICE result>>>", { result });
+
   // set accessToken to the cookie
   res.cookie("refreshToken", result?.refreshToken, cookieOptions);
 

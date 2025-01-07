@@ -515,3 +515,283 @@ export default ApiError;
 // 7. errorType
 // 8. stack
 ```
+
+## JWT Helper
+
+> > src/shared
+
+```ts
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
+
+//* token generate method >>>>>>>>>>>>>>>>>>>>>>
+
+const generateToken = (payload: object, secret: Secret, expire: string) => {
+  const token = jwt.sign(payload, secret, {
+    algorithm: "HS256",
+    expiresIn: expire,
+  });
+  return token;
+};
+
+const verifyToken = (token: string, secret: Secret): JwtPayload => {
+  return jwt.verify(token, secret) as JwtPayload;
+};
+
+export const jwtHelpers = { generateToken, verifyToken };
+```
+
+## Cookie Options
+
+```ts
+import { CookieOptions } from "express";
+
+export const cookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict", // Helps prevent CSRF attacks
+};
+```
+
+## Login User
+
+### Controller
+
+```ts
+const loginUser = AsyncHandler(async (req: Request, res: Response) => {
+  const result = await authServices.loginUser(req.body);
+  // set accessToken to the cookie
+  res.cookie("refreshToken", result.refreshToken, cookieOptions);
+
+  // send response with accessToken
+  SendResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: "Login successful",
+    data: {
+      accessToken: result.accessToken,
+      needPasswordChange: result.needPasswordChange,
+    },
+  });
+});
+```
+
+### Services
+
+```ts
+// Login user =====================>
+const loginUser = async (payload: IPayload) => {
+  const { username, email, password } = payload;
+  // check email or username is required or not
+  if (!username && !email) {
+    throw new Error("Email or username is required");
+  }
+  // find user by email or username and check user status
+  const user = await prisma.user.findFirstOrThrow({
+    where: {
+      status: UserStatus.ACTIVE,
+      OR: [{ email: email }, { username: username }],
+    },
+  });
+  if (!user) {
+    throw new Error("User Dose not exist");
+  }
+  // check password is correct or not
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+  if (!isPasswordCorrect) {
+    throw new Error("Invalid email or password");
+  }
+  // generate access token and refresh token
+  const accessToken = jwtHelpers.generateToken(
+    { email: user.email, role: user.role },
+    process.env.JWT_ACCESS_TOKEN_SECRET as string,
+    "5m"
+  );
+  const refreshToken = jwtHelpers.generateToken(
+    { email: user.email, role: user.role },
+    process.env.JWT_REFRESH_TOKEN_SECRET as string,
+    "15d"
+  );
+  // update refresh token in user table
+  await prisma.user.update({
+    where: {
+      email: user.email,
+    },
+    data: {
+      refreshToken,
+    },
+  });
+
+  return {
+    accessToken,
+    refreshToken,
+    needPasswordChange: user.needPasswordChange,
+  };
+};
+```
+
+## Refreshed Token
+
+### Controller
+
+```ts
+const refreshedToken = AsyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+  if (!refreshToken) {
+    // status 401
+    throw new ApiError(401, "You are not authorized");
+  }
+
+  const result = await authServices.refreshedToken(refreshToken);
+
+  // set accessToken to the cookie
+  res.cookie("refreshToken", result?.refreshToken, cookieOptions);
+
+  SendResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: "Token refreshed",
+    data: {
+      accessToken: result?.accessToken,
+      needPasswordChange: result?.needPasswordChange,
+    },
+  });
+});
+```
+
+### Services
+
+```ts
+// Refresh token =====================>
+const refreshedToken = async (incomingRefreshToken: string) => {
+  // check  token have or not or throw an error
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "You are not authorized");
+  }
+
+  // decode token
+  const decodedData: JwtPayload = jwtHelpers.verifyToken(
+    incomingRefreshToken,
+    process.env.JWT_REFRESH_TOKEN_SECRET as string
+  );
+
+  // find user by decoded email
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: decodedData?.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  // check user have or not
+  if (!user) {
+    throw new ApiError(401, "You are not authorized");
+  }
+
+  // check refresh token is same or not
+  if (incomingRefreshToken !== user.refreshToken) {
+    throw new ApiError(401, "You are not authorized");
+  }
+  // generate new access token and refresh token
+  const newAccessToken = jwtHelpers.generateToken(
+    { email: decodedData?.email, role: decodedData?.role },
+    process.env.JWT_ACCESS_TOKEN_SECRET as string,
+    "5m"
+  );
+  const newRefreshToken = jwtHelpers.generateToken(
+    { email: decodedData?.email, role: decodedData?.role },
+    process.env.JWT_REFRESH_TOKEN_SECRET as string,
+    "15d"
+  );
+  // update refresh token in user table
+  await prisma.user.update({
+    where: {
+      email: decodedData?.email,
+    },
+    data: {
+      refreshToken: newRefreshToken,
+    },
+  });
+  return {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    needPasswordChange: user.needPasswordChange,
+  };
+};
+```
+
+## Logout User
+
+### Controller
+
+```ts
+const logOutUser = AsyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+  if (!refreshToken) {
+    // status 401
+    throw new ApiError(401, "You are not authorized");
+  }
+  await authServices.logOutUser(refreshToken);
+
+  // remove refreshToken from the cookie
+  res.clearCookie("refreshToken");
+
+  SendResponse(res, {
+    statusCode: 200,
+    message: "Logout successful",
+  });
+});
+```
+
+### Services
+
+```ts
+//log out user =====================>
+const logOutUser = async (refreshToken: string) => {
+  // check  token have or not or throw an error
+  if (!refreshToken) {
+    throw new ApiError(401, "You are not authorized");
+  }
+  // use try catch block to handle error
+  try {
+    // decode token
+    const decodedData: JwtPayload | null = jwtHelpers.verifyToken(
+      process.env.JWT_REFRESH_TOKEN_SECRET as string,
+      refreshToken
+    );
+
+    // update refresh token in user table
+    await prisma.user.update({
+      where: {
+        email: decodedData?.email,
+      },
+      data: {
+        refreshToken: "",
+      },
+    });
+    return {
+      message: "Logout successfully",
+    };
+  } catch (error) {
+    new ApiError(401, "Invalid refresh token");
+  }
+};
+```
+
+## Env Config
+
+> > src/config/index.ts
+
+```ts
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.join(process.cwd(), ".env") });
+
+export default {
+  env: process.env.NODE_ENV,
+  port: process.env.PORT || 5000,
+  jwt: {
+    access_token_secret: process.env.JWT_ACCESS_TOKEN_SECRET,
+    access_token_expiration: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
+    refresh_token_secret: process.env.JWT_REFRESH_TOKEN_SECRET,
+    refresh_token_expiration: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
+  },
+};
+```
