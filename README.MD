@@ -752,8 +752,8 @@ const logOutUser = async (refreshToken: string) => {
   try {
     // decode token
     const decodedData: JwtPayload | null = jwtHelpers.verifyToken(
-      process.env.JWT_REFRESH_TOKEN_SECRET as string,
-      refreshToken
+      refreshToken,
+      config.jwt.refresh_token_secret as string
     );
 
     // update refresh token in user table
@@ -768,8 +768,8 @@ const logOutUser = async (refreshToken: string) => {
     return {
       message: "Logout successfully",
     };
-  } catch (error) {
-    new ApiError(401, "Invalid refresh token");
+  } catch {
+    throw new ApiError(401, "Invalid refresh token");
   }
 };
 ```
@@ -795,3 +795,5 @@ export default {
   },
 };
 ```
+
+## Role Base Access Control

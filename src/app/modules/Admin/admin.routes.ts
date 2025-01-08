@@ -2,10 +2,14 @@ import express from "express";
 import { adminController } from "./admin.controller";
 import { userSchema } from "../User/user.validation";
 import { validateRequest } from "../../middlewares/validateRequest";
+import { auth } from "../../middlewares/auth";
 
 const router = express.Router();
 
-router.route("/").get(adminController.getAllAdmin);
+router
+  .route("/")
+  .get(auth("ADMIN", "SUPER_ADMIN"), adminController.getAllAdmin);
+
 router.route("/:id").get(adminController.getAdminById);
 router
   .route("/:id")
