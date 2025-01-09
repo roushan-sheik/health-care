@@ -60,4 +60,20 @@ const refreshedToken = AsyncHandler(async (req: Request, res: Response) => {
     },
   });
 });
-export const authController = { loginUser, refreshedToken, logOutUser };
+const changePassword = AsyncHandler(async (req: Request, res: Response) => {
+  const result = await authServices.changePassword(req.user, req.body);
+  // remove refreshToken from the cookie
+  res.clearCookie("refreshToken");
+
+  SendResponse(res, {
+    statusCode: 200,
+    message: "Password changed successfully",
+    data: result,
+  });
+});
+export const authController = {
+  loginUser,
+  refreshedToken,
+  logOutUser,
+  changePassword,
+};

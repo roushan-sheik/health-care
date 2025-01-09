@@ -1,16 +1,20 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import { userController } from "./user.controller";
 import { validateRequest } from "../../middlewares/validateRequest";
 import { userSchema } from "./user.validation";
 import { auth } from "../../middlewares/auth";
+import { UserRole } from "@prisma/client";
 
-const router = express();
+const router = express.Router();
 
-router.route("/").get(auth("ADMIN", "SUPER_ADMIN"), userController.getAllUsers);
+router
+  .route("/")
+  .get(auth(UserRole.ADMIN, UserRole.SUPER_ADMIN), userController.getAllUsers);
+
 router
   .route("/")
   .post(
-    auth("ADMIN", "SUPER_ADMIN"),
+    auth(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.PATIENT),
     validateRequest(userSchema),
     userController.createAdmin
   );

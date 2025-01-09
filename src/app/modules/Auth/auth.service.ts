@@ -6,6 +6,7 @@ import { jwtHelpers } from "../../../helpers/jwtHelper";
 import { UserStatus } from "@prisma/client";
 import ApiError from "../../utils/ApiError";
 import config from "../../../config";
+import { StatusCodes } from "http-status-codes";
 
 // Login user =====================>
 const loginUser = async (payload: IPayload) => {
@@ -141,5 +142,45 @@ const refreshedToken = async (incomingRefreshToken: string) => {
     needPasswordChange: user.needPasswordChange,
   };
 };
-
-export const authServices = { loginUser, refreshedToken, logOutUser };
+//  Change password =====================>
+const changePassword = async (user: object, payload: object) => {
+  // check  token have or not or throw an error
+  if (!user) {
+    throw new ApiError(401, "You are not authorized");
+  }
+  // find user by email
+  const userByEmail = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: user.email,
+    },
+  });
+  // check password is correct or not
+  const isPasswordCorrect = await bcrypt.compare(
+    payload.oldPassword,
+    userByEmail.password
+  );
+  if (!isPasswordCorrect) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid email or password");
+  }
+  // hash the user password
+  const hashedPassword = await bcrypt.hash(payload.oldPassword, 10);
+  // update password in user table
+  await prisma.user.update({
+    where: {
+      email: user.email,
+    },
+    data: {
+      password: hashedPassword,
+      needPasswordChange: false,
+    },
+  });
+  return {
+    message: "Password changed successfully",
+  };
+};
+export const authServices = {
+  loginUser,
+  refreshedToken,
+  logOutUser,
+  changePassword,
+};
