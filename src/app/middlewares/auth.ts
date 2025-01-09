@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
 import { jwtHelpers } from "../../helpers/jwtHelper";
 import config from "../../config";
@@ -8,7 +9,7 @@ import { StatusCodes } from "http-status-codes";
 
 export const auth = (...roles: UserRole[]) => {
   return async (
-    req: Request,
+    req: Request & { user?: any },
     res: Response,
     next: NextFunction
   ): Promise<void> => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { JwtPayload, Secret } from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { prisma } from "../../../shared/prisma";
@@ -143,7 +144,7 @@ const refreshedToken = async (incomingRefreshToken: string) => {
   };
 };
 //  Change password =====================>
-const changePassword = async (user: object, payload: object) => {
+const changePassword = async (user: any, payload: any) => {
   // check  token have or not or throw an error
   if (!user) {
     throw new ApiError(401, "You are not authorized");
@@ -152,6 +153,7 @@ const changePassword = async (user: object, payload: object) => {
   const userByEmail = await prisma.user.findUniqueOrThrow({
     where: {
       email: user.email,
+      status: UserStatus.ACTIVE,
     },
   });
   // check password is correct or not

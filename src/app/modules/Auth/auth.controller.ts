@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import AsyncHandler from "../../utils/AsyncHandler";
 import { authServices } from "./auth.service";
@@ -60,17 +61,19 @@ const refreshedToken = AsyncHandler(async (req: Request, res: Response) => {
     },
   });
 });
-const changePassword = AsyncHandler(async (req: Request, res: Response) => {
-  const result = await authServices.changePassword(req.user, req.body);
-  // remove refreshToken from the cookie
-  res.clearCookie("refreshToken");
+const changePassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const result = await authServices.changePassword(req.user, req.body);
+    // remove refreshToken from the cookie
+    res.clearCookie("refreshToken");
 
-  SendResponse(res, {
-    statusCode: 200,
-    message: "Password changed successfully",
-    data: result,
-  });
-});
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password changed successfully",
+      data: result,
+    });
+  }
+);
 export const authController = {
   loginUser,
   refreshedToken,
