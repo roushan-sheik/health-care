@@ -74,9 +74,23 @@ const changePassword = AsyncHandler(
     });
   }
 );
+const forgotPassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const result = await authServices.forgotPassword(req.body);
+    // remove refreshToken from the cookie
+    res.clearCookie("refreshToken");
+
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password changed successfully",
+      data: result,
+    });
+  }
+);
 export const authController = {
   loginUser,
   refreshedToken,
   logOutUser,
   changePassword,
+  forgotPassword,
 };

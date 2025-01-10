@@ -8,6 +8,7 @@ import { UserStatus } from "@prisma/client";
 import ApiError from "../../utils/ApiError";
 import config from "../../../config";
 import { StatusCodes } from "http-status-codes";
+import emailSender from "./emailSender";
 
 // Login user =====================>
 const loginUser = async (payload: IPayload) => {
@@ -180,9 +181,58 @@ const changePassword = async (user: any, payload: any) => {
     message: "Password changed successfully",
   };
 };
+//  Change password =====================>
+// Steps algorithm
+// 1. Find user by email  and check user status
+// 2. Generate reset password token
+// 3. Make a link with email and token
+// 5. create a file called emailSender.ts
+// 6. go to nodemailer and copy the example  code
+// 7. create a emailSender function paste the code and export it
+// 8. change auth user email and password
+// 9. change host it will be gmail host "smtp.gmail.com" search on google
+// 10. remove the main function make emailSender function async
+// 11. you will find those in your google account App password
+// 12. https://myaccount.google.com/apppasswords
+// 13. change transport object info like, from , to , html body
+
+const forgotPassword = async (payload: { email: string }) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  // generate access token and refresh token
+  const resetPassToken = jwtHelpers.generateToken(
+    { email: user.email, role: user.role },
+    config.jwt.reset_token_secret as Secret,
+    config.jwt.reset_token_expiration as string
+  );
+  const resetPasswordLink = `${config.reset_password_link}?email=${user.email}&token=${resetPassToken}`;
+  console.log("🚀 ~ forgotPassword ~ resetPasswordLink:", resetPasswordLink);
+
+  await emailSender(
+    user.email,
+    `
+    <div>
+      <h1>Reset Password</h1>
+      <p>Click this link to reset your password</p>
+      <a href="${resetPasswordLink}">
+        <button>Reset Password</button>
+      </a>
+    </div>
+    `
+  );
+  return {
+    email: payload.email,
+    message: "Password changed successfully",
+  };
+};
 export const authServices = {
   loginUser,
   refreshedToken,
   logOutUser,
   changePassword,
+  forgotPassword,
 };
