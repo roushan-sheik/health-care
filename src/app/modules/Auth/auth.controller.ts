@@ -87,10 +87,26 @@ const forgotPassword = AsyncHandler(
     });
   }
 );
+const resetPassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const token = req.headers.authorization || "";
+
+    const result = await authServices.resetPassword(token, req.body);
+    // remove refreshToken from the cookie
+    res.clearCookie("refreshToken");
+
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password Reset successfully",
+      data: null,
+    });
+  }
+);
 export const authController = {
   loginUser,
   refreshedToken,
   logOutUser,
   changePassword,
   forgotPassword,
+  resetPassword,
 };

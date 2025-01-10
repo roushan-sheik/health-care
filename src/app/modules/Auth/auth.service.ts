@@ -195,6 +195,11 @@ const changePassword = async (user: any, payload: any) => {
 // 11. you will find those in your google account App password
 // 12. https://myaccount.google.com/apppasswords
 // 13. change transport object info like, from , to , html body
+//* 14. make reset password route for reset the password
+// 15. find user by email and check user status
+// 16. verify the token
+// 17. hash the password
+// 18. update the password
 
 const forgotPassword = async (payload: { email: string }) => {
   const user = await prisma.user.findUniqueOrThrow({
@@ -210,7 +215,6 @@ const forgotPassword = async (payload: { email: string }) => {
     config.jwt.reset_token_expiration as string
   );
   const resetPasswordLink = `${config.reset_password_link}?email=${user.email}&token=${resetPassToken}`;
-  console.log("🚀 ~ forgotPassword ~ resetPasswordLink:", resetPasswordLink);
 
   await emailSender(
     user.email,
@@ -229,10 +233,39 @@ const forgotPassword = async (payload: { email: string }) => {
     message: "Password changed successfully",
   };
 };
+const resetPassword = async (token: string, payload: any) => {
+  // reset password
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+  }
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.jwt.reset_token_secret as Secret
+  );
+  if (!isValidToken) {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Forbidden! Invalid token");
+  }
+  const hashedPassword = await bcrypt.hash(payload.password, 10);
+  await prisma.user.update({
+    where: {
+      email: payload.email,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+};
 export const authServices = {
   loginUser,
   refreshedToken,
   logOutUser,
   changePassword,
   forgotPassword,
+  resetPassword,
 };
