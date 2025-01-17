@@ -752,8 +752,8 @@ const logOutUser = async (refreshToken: string) => {
   try {
     // decode token
     const decodedData: JwtPayload | null = jwtHelpers.verifyToken(
-      process.env.JWT_REFRESH_TOKEN_SECRET as string,
-      refreshToken
+      refreshToken,
+      config.jwt.refresh_token_secret as string
     );
 
     // update refresh token in user table
@@ -768,8 +768,8 @@ const logOutUser = async (refreshToken: string) => {
     return {
       message: "Logout successfully",
     };
-  } catch (error) {
-    new ApiError(401, "Invalid refresh token");
+  } catch {
+    throw new ApiError(401, "Invalid refresh token");
   }
 };
 ```
@@ -794,4 +794,229 @@ export default {
     refresh_token_expiration: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
   },
 };
+```
+
+## Role Base Access Control auth Middleware
+
+```ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextFunction, Request, Response } from "express";
+import { jwtHelpers } from "../../helpers/jwtHelper";
+import config from "../../config";
+import { Secret } from "jsonwebtoken";
+import ApiError from "../utils/ApiError";
+import { UserRole } from "@prisma/client";
+import { StatusCodes } from "http-status-codes";
+
+export const auth = (...roles: UserRole[]) => {
+  return async (
+    req: Request & { user?: any },
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const token = req.headers.authorization;
+      if (!token) {
+        res.status(401).json({
+          message: "You are not authorized",
+        });
+        return;
+      }
+      const verifiedUser = jwtHelpers.verifyToken(
+        token,
+        config.jwt.access_token_secret as Secret
+      );
+      if (roles.length && !roles.includes(verifiedUser.role)) {
+        throw new ApiError(
+          StatusCodes.FORBIDDEN,
+          "Forbidden! You are not authorized to access this route"
+        );
+      }
+      req.user = verifiedUser;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+```
+
+# forget password with modemailer
+
+```ts
+//  Change password =====================>
+// Steps algorithm
+// 1. Find user by email  and check user status
+// 2. Generate reset password token
+// 3. Make a link with email and token
+// 5. create a file called emailSender.ts
+// 6. go to nodemailer and copy the example  code
+// 7. create a emailSender function paste the code and export it
+// 8. change auth user email and password
+// 9. change host it will be gmail host "smtp.gmail.com" search on google
+// 10. remove the main function make emailSender function async
+// 11. you will find those in your google account App password
+// 12. https://myaccount.google.com/apppasswords
+// 13. change transport object info like, from , to , html body
+//* 14. make reset password route for reset the password
+// 15. find user by email and check user status
+// 16. verify the token
+// 17. hash the password
+// 18. update the password
+```
+
+# Forgot password
+
+> > forgotPassword controller
+
+```ts
+const forgotPassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const result = await authServices.forgotPassword(req.body);
+
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password changed successfully",
+      data: result,
+    });
+  }
+);
+```
+
+> > forgotPassword service
+
+```ts
+const forgotPassword = async (payload: { email: string }) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  // generate access token and refresh token
+  const resetPassToken = jwtHelpers.generateToken(
+    { email: user.email, role: user.role },
+    config.jwt.reset_token_secret as Secret,
+    config.jwt.reset_token_expiration as string
+  );
+  // Make a Frontend Link
+  const resetPasswordLink = `${config.reset_password_link}?email=${user.email}&token=${resetPassToken}`;
+
+  await emailSender(
+    user.email,
+    `
+    <div>
+      <h1>Reset Password</h1>
+      <p>Click this link to reset your password</p>
+      <a href="${resetPasswordLink}">
+        <button>Reset Password</button>
+      </a>
+    </div>
+    `
+  );
+  return {
+    email: payload.email,
+    message: "Password changed successfully",
+  };
+};
+```
+
+# Reset password
+
+> > resetPassword controller
+
+```ts
+const resetPassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const token = req.headers.authorization || "";
+
+    await authServices.resetPassword(token, req.body);
+
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password Reset successfully",
+      data: null,
+    });
+  }
+);
+```
+
+> > resetPassword service
+
+```ts
+const resetPassword = async (
+  token: string,
+  payload: { email: string; password: string }
+) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.jwt.reset_token_secret as Secret
+  );
+
+  if (!isValidToken) {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Forbidden!");
+  }
+
+  // hash password
+  const password = await bcrypt.hash(payload.password, 12);
+
+  // update into database
+  await prisma.user.update({
+    where: {
+      email: payload.email,
+    },
+    data: {
+      password,
+    },
+  });
+};
+```
+
+# Image Upload With Multer and Cloudinary
+
+```ts
+ yarn add multer
+ yarn add @types/multer -D
+
+ // Go to multer docs Disk storage and copy the code
+
+https://www.npmjs.com/package/multer
+
+```
+
+> > helpers/fileUploader.ts
+
+```ts
+import multer from "multer";
+import path from "path";
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(process.cwd(), "uploads"));
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+export const fileUploader = {
+  upload,
+};
+```
+
+> > helpers/fileUploader.ts
+
+```ts
+
 ```

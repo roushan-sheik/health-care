@@ -2,13 +2,24 @@ import { UserRole } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { prisma } from "../../../shared/prisma";
 
-const createAdmin = async (payload: any) => {
+interface AdminPayload {
+  admin: {
+    username: string;
+    email: string;
+    password: string;
+    contactNumber: string;
+  };
+  username?: string;
+  password: string;
+}
+
+const createAdmin = async (payload: AdminPayload) => {
   // hash the user password
   const hashedPassword = await bcrypt.hash(payload.password, 10);
 
   const userData = {
-    username: payload?.username,
-    email: payload.admin.email,
+    username: payload?.admin?.username,
+    email: payload.admin?.email,
     password: hashedPassword,
     role: UserRole.ADMIN,
   };
@@ -17,7 +28,6 @@ const createAdmin = async (payload: any) => {
     await transactionClient.user.create({
       data: userData,
     });
-    // admin creation
     const createdAdminData = await transactionClient.admin.create({
       data: payload.admin,
     });

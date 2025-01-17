@@ -10,7 +10,7 @@ app.use(cookieParser());
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
-console.log("hi");
+
 // Routes Imports =========================>
 import appRoute from "./app/routes";
 import { globalErrorHandler } from "./app/middlewares/globalErrorHandler";

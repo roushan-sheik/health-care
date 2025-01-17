@@ -1,0 +1,2 @@
+http://localhost:3000/reset-pass?email=pgrowshan2018@gmail.com&token=
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InBncm93c2hhbjIwMThAZ21haWwuY29tIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzM2NDg3NzAxLCJleHAiOjE3Mzc3ODM3MDF9.shzg3y3M7cFPMFeTOQT2rtsxSCYWBSn6K2_42nMTKWA

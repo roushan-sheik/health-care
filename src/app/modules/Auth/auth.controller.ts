@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import AsyncHandler from "../../utils/AsyncHandler";
 import { authServices } from "./auth.service";
@@ -60,4 +61,47 @@ const refreshedToken = AsyncHandler(async (req: Request, res: Response) => {
     },
   });
 });
-export const authController = { loginUser, refreshedToken, logOutUser };
+const changePassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const result = await authServices.changePassword(req.user, req.body);
+
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password changed successfully",
+      data: result,
+    });
+  }
+);
+const forgotPassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const result = await authServices.forgotPassword(req.body);
+
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password changed successfully",
+      data: result,
+    });
+  }
+);
+const resetPassword = AsyncHandler(
+  async (req: Request & { user?: any }, res: Response) => {
+    const token = req.headers.authorization || "";
+
+    await authServices.resetPassword(token, req.body);
+
+    SendResponse(res, {
+      statusCode: 200,
+      message: "Password Reset successfully",
+      data: null,
+    });
+  }
+);
+
+export const authController = {
+  loginUser,
+  refreshedToken,
+  logOutUser,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+};
