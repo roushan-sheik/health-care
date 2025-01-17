@@ -200,7 +200,6 @@ const changePassword = async (user: any, payload: any) => {
 // 16. verify the token
 // 17. hash the password
 // 18. update the password
-
 const forgotPassword = async (payload: { email: string }) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: {
