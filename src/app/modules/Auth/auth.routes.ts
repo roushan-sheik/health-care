@@ -19,27 +19,7 @@ router
     ),
     authController.changePassword
   );
-router
-  .route("/forgot-password")
-  .post(
-    auth(
-      UserRole.ADMIN,
-      UserRole.DOCTOR,
-      UserRole.PATIENT,
-      UserRole.SUPER_ADMIN
-    ),
-    authController.forgotPassword
-  );
-router
-  .route("/reset-password")
-  .post(
-    auth(
-      UserRole.ADMIN,
-      UserRole.DOCTOR,
-      UserRole.PATIENT,
-      UserRole.SUPER_ADMIN
-    ),
-    authController.resetPassword
-  );
+router.route("/forgot-password").post(authController.forgotPassword);
+router.route("/reset-password").post(authController.resetPassword);
 
 export default router;

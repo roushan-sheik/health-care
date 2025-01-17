@@ -62,9 +62,9 @@ const loginUser = async (payload: IPayload) => {
 //log out user =====================>
 const logOutUser = async (refreshToken: string) => {
   // check  token have or not or throw an error
-  if (!refreshToken) {
-    throw new ApiError(401, "You are not authorized");
-  }
+  // if (!refreshToken) {
+  //   throw new ApiError(401, "You are not authorized");
+  // }
   // use try catch block to handle error
   try {
     // decode token
@@ -214,6 +214,7 @@ const forgotPassword = async (payload: { email: string }) => {
     config.jwt.reset_token_secret as Secret,
     config.jwt.reset_token_expiration as string
   );
+  // Make a Frontend Link
   const resetPasswordLink = `${config.reset_password_link}?email=${user.email}&token=${resetPassToken}`;
 
   await emailSender(
@@ -233,8 +234,11 @@ const forgotPassword = async (payload: { email: string }) => {
     message: "Password changed successfully",
   };
 };
-const resetPassword = async (token: string, payload: any) => {
-  // reset password
+
+const resetPassword = async (
+  token: string,
+  payload: { email: string; password: string }
+) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: {
       email: payload.email,
@@ -242,22 +246,27 @@ const resetPassword = async (token: string, payload: any) => {
     },
   });
   if (!user) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+    throw new ApiError(404, "User not found");
   }
   const isValidToken = jwtHelpers.verifyToken(
     token,
     config.jwt.reset_token_secret as Secret
   );
+
   if (!isValidToken) {
-    throw new ApiError(StatusCodes.FORBIDDEN, "Forbidden! Invalid token");
+    throw new ApiError(StatusCodes.FORBIDDEN, "Forbidden!");
   }
-  const hashedPassword = await bcrypt.hash(payload.password, 10);
+
+  // hash password
+  const password = await bcrypt.hash(payload.password, 12);
+
+  // update into database
   await prisma.user.update({
     where: {
       email: payload.email,
     },
     data: {
-      password: hashedPassword,
+      password,
     },
   });
 };

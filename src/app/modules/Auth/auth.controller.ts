@@ -64,8 +64,6 @@ const refreshedToken = AsyncHandler(async (req: Request, res: Response) => {
 const changePassword = AsyncHandler(
   async (req: Request & { user?: any }, res: Response) => {
     const result = await authServices.changePassword(req.user, req.body);
-    // remove refreshToken from the cookie
-    res.clearCookie("refreshToken");
 
     SendResponse(res, {
       statusCode: 200,
@@ -77,8 +75,6 @@ const changePassword = AsyncHandler(
 const forgotPassword = AsyncHandler(
   async (req: Request & { user?: any }, res: Response) => {
     const result = await authServices.forgotPassword(req.body);
-    // remove refreshToken from the cookie
-    res.clearCookie("refreshToken");
 
     SendResponse(res, {
       statusCode: 200,
@@ -91,9 +87,7 @@ const resetPassword = AsyncHandler(
   async (req: Request & { user?: any }, res: Response) => {
     const token = req.headers.authorization || "";
 
-    const result = await authServices.resetPassword(token, req.body);
-    // remove refreshToken from the cookie
-    res.clearCookie("refreshToken");
+    await authServices.resetPassword(token, req.body);
 
     SendResponse(res, {
       statusCode: 200,
@@ -102,6 +96,7 @@ const resetPassword = AsyncHandler(
     });
   }
 );
+
 export const authController = {
   loginUser,
   refreshedToken,
