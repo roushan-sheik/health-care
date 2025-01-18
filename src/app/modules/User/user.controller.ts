@@ -6,7 +6,7 @@ import AsyncHandler from "../../utils/AsyncHandler";
 import ApiResponse from "../../utils/ApiResponse";
 
 const createAdmin = AsyncHandler(async (req: Request, res: Response) => {
-  const result = await userService.createAdmin(req.body);
+  const result = await userService.createAdmin(req);
   res
     .status(StatusCodes.CREATED)
     .json(
