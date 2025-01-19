@@ -1,7 +1,7 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { userController } from "./user.controller";
 import { validateRequest } from "../../middlewares/validateRequest";
-import { userSchema } from "./user.validation";
+import { UserPayloadSchema } from "./user.validation";
 import { auth } from "../../middlewares/auth";
 import { UserRole } from "@prisma/client";
 import { fileUploader } from "../../../helpers/fileUploader";
@@ -15,10 +15,14 @@ router
 router
   .route("/")
   .post(
-    auth(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.PATIENT),
+    auth(UserRole.ADMIN, UserRole.SUPER_ADMIN),
     fileUploader.upload.single("file"),
-    validateRequest(userSchema),
-    userController.createAdmin
+    (req: Request, res: Response, next: NextFunction) => {
+      req.body = validateRequest(
+        UserPayloadSchema.parse(JSON.parse(req.body.data))
+      );
+      return userController.createAdmin(req, res, next);
+    }
   );
 
 export const userRoutes = router;

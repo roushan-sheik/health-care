@@ -4,23 +4,13 @@ import { prisma } from "../../../shared/prisma";
 import { Request } from "express";
 import { fileUploader } from "../../../helpers/fileUploader";
 
-interface AdminPayload {
-  admin: {
-    username: string;
-    email: string;
-    password: string;
-    contactNumber: string;
-  };
-  username?: string;
-  password: string;
-}
-
 const createAdmin = async (req: Request) => {
   // file upload
   const file = req.file;
+
   if (file) {
     const uploadResult = await fileUploader.uploadToCloudinary(file);
-    console.log({ uploadResult });
+    console.log("uploadResult >>>::::", uploadResult);
   }
 
   // hash the user password
